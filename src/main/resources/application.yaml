@@ -4,3 +4,4 @@ spring:
       host: localhost
       port: 27017
       database: learn_mongo
+      auto-index-creation: true

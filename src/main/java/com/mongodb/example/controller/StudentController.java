@@ -164,5 +164,57 @@ public class StudentController {
     public void testMongoTemplate(){
 
         myMongoTemplateRepository.findStudent();
+
+        myMongoTemplateRepository.findStudentsWithMoreCriterias();
+
+        myMongoTemplateRepository.findStudentsWithMoreCriteriasAndPagination();
+
+        myMongoTemplateRepository.aggregationOperation();
+    }
+
+    @GetMapping(value = "/test/query")
+    public void testMongoQueries(){
+
+        //===================================== count =================================//
+
+        long countByCourse = studentRepository.countByCourse("Engineering");
+        System.out.println("The count is ::: " + countByCourse);
+
+        long countByCourseQuery = studentRepository.countByCourseQuery("Engineering");
+        System.out.println("The count query is ::: " + countByCourseQuery);
+
+        //===================================== exists =================================//
+
+        boolean isExists = studentRepository.existsStudentByCollege("BVP");
+        System.out.println("The existsStudentByCollege ::: " + isExists);
+
+        boolean isExistsQuery = studentRepository.existsStudentByCollegeQuery("BVP");
+        System.out.println("The existsStudentByCollegeQuery ::: " + isExistsQuery);
+
+        //===================================== sort =================================//
+
+        List<Student> studentInSortingQuery = studentRepository.findStudentInSortingQuery();
+        System.out.println("studentInSortingQuery ::: " + studentInSortingQuery);
+
+        //===================================== delete =================================//
+
+        long deleteStudentByName = studentRepository.deleteStudentByName("Abhishek");
+        System.out.println("deleteStudentByName :::: " + deleteStudentByName);
+
+        long deleteStudentByNameQuery = studentRepository.deleteStudentByNameQuery("Sumit");
+        System.out.println("deleteStudentByNameQuery :::: " + deleteStudentByNameQuery);
+
+        //===================================== regex =================================//
+
+        List<Student> findStudentByNameRegex = studentRepository.findStudentByNameRegex("Piyush");
+        System.out.println("findStudentByNameRegex ::: " + findStudentByNameRegex);
+
+        List<Student> findStudentByNameRegExQuery = studentRepository.findStudentByNameRegExQuery("Piyush");
+        System.out.println("findStudentByNameRegExQuery ::: " + findStudentByNameRegExQuery);
+
+        //===================================== using params =================================//
+
+        List<Student> findStudentByCourseAndBuildingNameQueryUsingParams = studentRepository.findStudentByCourseAndBuildingNameQueryUsingParams("Engineering", "A4");
+        System.out.println("findStudentByCourseAndBuildingNameQueryUsingParams :::: " + findStudentByCourseAndBuildingNameQueryUsingParams);
     }
 }
