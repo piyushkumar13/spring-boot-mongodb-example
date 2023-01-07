@@ -5,8 +5,10 @@
  *  THIS PROGRAM IS CONFIDENTIAL AND PROPRIETARY TO LOGMEIN
  *  AND CONSTITUTES A VALUABLE TRADE SECRET.
  */
-package com.mongodb.example.domain;
+package com.mongodb.example.domain.entity;
 
+import com.mongodb.example.domain.Address;
+import com.mongodb.example.domain.Subject;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

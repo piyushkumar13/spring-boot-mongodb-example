@@ -7,10 +7,12 @@
  */
 package com.mongodb.example.repository;
 
-import com.mongodb.example.domain.Student;
+import com.mongodb.example.domain.AggregationBuildingCountClass;
+import com.mongodb.example.domain.entity.Student;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -70,4 +72,15 @@ public interface StudentRepository extends MongoRepository<Student, Integer> {
 
     @Query(value = "{course: :#{#courseName}, 'address.buildingName': :#{#building}}")
     List<Student> findStudentByCourseAndBuildingNameQueryUsingParams(@Param("courseName") String course, @Param("building") String buildingName);
+
+
+    //==================================== using aggregation pipeline====================//
+
+
+    // projection here should work as per this https://stackoverflow.com/a/43538722 - but its not working in code but in mongocompass its working.
+//    @Aggregation(pipeline = {"{$match: {age: 32}}", "{$group: {_id: '$address.buildingName', addressCount: {$sum: 1}}}","{$project: {addressBuildingName: '$_id', addressCount: 1, _id: 0}}"})
+
+    // However, as a workaround I have added @Field annotation on addressBuildingName in AggregationBuildingCountClass with which its working
+    @Aggregation(pipeline = {"{$match: {age: 32}}", "{$group: {_id: '$address.buildingName', addressCount: {$sum: 1}}}"})
+    List<AggregationBuildingCountClass> getAggregateResult();
 }

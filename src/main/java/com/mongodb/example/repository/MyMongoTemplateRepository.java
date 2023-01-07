@@ -7,7 +7,12 @@
  */
 package com.mongodb.example.repository;
 
-import com.mongodb.example.domain.Student;
+import static java.util.Arrays.asList;
+
+import com.mongodb.example.domain.Address;
+import com.mongodb.example.domain.Subject;
+import com.mongodb.example.domain.entity.Employee;
+import com.mongodb.example.domain.entity.Student;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +27,9 @@ import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
 import org.springframework.data.mongodb.core.aggregation.SortOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.TextCriteria;
+import org.springframework.data.mongodb.core.query.TextQuery;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -103,9 +111,9 @@ public class MyMongoTemplateRepository {
 
         MatchOperation ageMatch = Aggregation.match(Criteria.where("age").gte(32));
         GroupOperation groupByBuildingName = Aggregation.group("address.buildingName").count().as("addressCount");
-//        ProjectionOperation projection = Aggregation.project("addressCount").and("_id").as("addressBuildingName");
-//        ProjectionOperation projection = Aggregation.project().and("addressCount").as("addressCount").and("_id").as("addressBuildingName");
-        ProjectionOperation projection = Aggregation.project().andExpression("addressCount").as("addressCount").andExpression("_id").as("addressBuildingName");
+//        ProjectionOperation projection = Aggregation.project("addressCount").and("_id").as("addressBuildingName"); // we can do it like this
+//        ProjectionOperation projection = Aggregation.project().and("addressCount").as("addressCount").and("_id").as("addressBuildingName"); // we can do it like this as well
+        ProjectionOperation projection = Aggregation.project().andExpression("addressCount").as("addressCount").andExpression("_id").as("addressBuildingName"); //// we can do it like this as well
         SortOperation sortOperation = Aggregation.sort(Sort.Direction.DESC, "addressCount");
 
         Aggregation aggregation = Aggregation.newAggregation(ageMatch, groupByBuildingName, projection,sortOperation);
@@ -117,6 +125,105 @@ public class MyMongoTemplateRepository {
 
     }
 
+
+    public void insertStudent(){
+
+        Student student = Student.builder()
+                .id(7)
+                .name("Sumit")
+                .age(37)
+                .subjects(asList(Subject.builder().subjectNumber("P-101").subjectName("Physics").build(), Subject.builder().subjectNumber("P-102").subjectName("Chemistry").build()))
+                .college("SVC")
+                .course("Engineering")
+                .address(Address.builder().city("New Delhi").state("Delhi").country("India").buildingName("Dilshad").build()).build();
+
+        mongoTemplate.insert(student);
+    }
+
+    /* The save operation has save-or-update semantics: if an id is present, it performs an update, and if not, it does an insert. */
+    public void saveStudent(){
+
+        Student student = Student.builder()
+                .id(8)
+                .name("Anoop")
+                .age(40)
+                .subjects(asList(Subject.builder().subjectNumber("P-101").subjectName("Physics").build(), Subject.builder().subjectNumber("P-102").subjectName("Chemistry").build()))
+                .college("ABC College")
+                .course("Engineering")
+                .address(Address.builder().city("Indore").state("MP").country("India").buildingName("SomeBuilding").build()).build();
+
+        mongoTemplate.save(student);
+    }
+
+
+    public void updateStudent(){
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("name").is("Sumit"));
+
+        Update update = new Update();
+        update.set("college", "SVC College");
+
+        mongoTemplate.updateFirst(query, update, Student.class);
+    }
+
+
+    public void existsStudent(){
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("name").is("Anoop"));
+
+        boolean exists = mongoTemplate.exists(query, "students");
+
+        System.out.println("Student exists :::: " + exists);
+    }
+
+    public void findAndModify(){
+        Query query = new Query();
+        query.addCriteria(Criteria.where("name").is("Anoop"));
+
+        Update update = new Update();
+        update.set("address.buildingName", "SBR");
+
+        Student existingStudent = mongoTemplate.findAndModify(query, update, Student.class);
+        System.out.println("Existing student document :::  " + existingStudent);
+    }
+
+
+    //========================================  Text Search Operations on Employee ====================================
+
+    /**
+     * It will be searched by exact term passed against textIndexes field and also will consider weight in account which decides score.
+     * So, here it will search the term against department and name and returns matching OR result of department and name
+     * */
+    public void textSearchOnEmployeesByMatchingTerm(String term){
+        Query query = TextQuery.queryText(TextCriteria.forDefaultLanguage().matching(term)).sortByScore().with(Sort.by(Sort.Direction.DESC, "score"));
+        List<Employee> searchByMatchingTerm = mongoTemplate.find(query, Employee.class);
+        System.out.println("textSearchOnEmployeesByMatchingTerm ::: " + searchByMatchingTerm);
+    }
+
+    /**
+     * It will be searched by exact list of terms passed against textIndexes field and also will consider weight in account which decides score.
+     * So, here it will search the list of terms against department and name and returns matching OR result of department and name
+     * */
+    public void textSearchOnEmployeesByMatchingAny(String... any){
+        Query query = TextQuery.queryText(TextCriteria.forDefaultLanguage().matchingAny(any)).sortByScore().with(Sort.by(Sort.Direction.DESC, "score"));
+        List<Employee> searchByMatchingAny = mongoTemplate.find(query, Employee.class);
+        System.out.println("textSearchOnEmployeesByMatchingAny ::: " + searchByMatchingAny);
+
+    }
+
+    /**
+     * It will be searched by a phrase passed against textIndexes field and also will consider weight in account which decides score.
+     * So, here it will search the phrase against department and name and returns matching OR result of department and name.
+     * Phrase is like a substring inside a string.
+     * */
+    public void textSearchOnEmployeesByMatchingPhrase(String phrase){
+        Query query = TextQuery.queryText(TextCriteria.forDefaultLanguage().matchingPhrase(phrase)).sortByScore().with(Sort.by(Sort.Direction.DESC, "score"));
+        List<Employee> searchByMatchingPhrase = mongoTemplate.find(query, Employee.class);
+        System.out.println("textSearchOnEmployeesByMatchingPhrase ::: " + searchByMatchingPhrase);
+
+    }
 
     private static class AggregationBuildingCountClass{
         private String addressBuildingName;

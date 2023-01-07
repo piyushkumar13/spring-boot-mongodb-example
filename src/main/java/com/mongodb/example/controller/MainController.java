@@ -10,10 +10,14 @@ package com.mongodb.example.controller;
 import com.mongodb.example.controller.dto.StudentDto;
 import com.mongodb.example.controller.dto.SubjectDto;
 import com.mongodb.example.domain.Address;
-import com.mongodb.example.domain.Student;
+import com.mongodb.example.domain.AggregationBuildingCountClass;
 import com.mongodb.example.domain.Subject;
+import com.mongodb.example.domain.entity.Employee;
+import com.mongodb.example.domain.entity.Student;
+import com.mongodb.example.repository.EmployeeRepository;
 import com.mongodb.example.repository.MyMongoTemplateRepository;
 import com.mongodb.example.repository.StudentRepository;
+import com.mongodb.example.service.MainServiceForTransactionExample;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -38,13 +43,19 @@ import org.springframework.web.bind.annotation.RestController;
  */
 
 @RestController
-public class StudentController {
+public class MainController {
 
     @Autowired
     private StudentRepository studentRepository;
 
     @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Autowired
     private MyMongoTemplateRepository myMongoTemplateRepository;
+
+    @Autowired
+    private MainServiceForTransactionExample mainServiceForTransactionExample;
 
     @GetMapping("/students")
     public ResponseEntity<List<Student>> getStudents() {
@@ -170,6 +181,13 @@ public class StudentController {
         myMongoTemplateRepository.findStudentsWithMoreCriteriasAndPagination();
 
         myMongoTemplateRepository.aggregationOperation();
+
+        myMongoTemplateRepository.insertStudent();
+        myMongoTemplateRepository.saveStudent();
+
+        myMongoTemplateRepository.updateStudent();
+        myMongoTemplateRepository.existsStudent();
+        myMongoTemplateRepository.findAndModify();
     }
 
     @GetMapping(value = "/test/query")
@@ -216,5 +234,41 @@ public class StudentController {
 
         List<Student> findStudentByCourseAndBuildingNameQueryUsingParams = studentRepository.findStudentByCourseAndBuildingNameQueryUsingParams("Engineering", "A4");
         System.out.println("findStudentByCourseAndBuildingNameQueryUsingParams :::: " + findStudentByCourseAndBuildingNameQueryUsingParams);
+
+        //===================================== using aggregate query =========================//
+        List<AggregationBuildingCountClass> aggregationBuildingCountClasses = studentRepository.getAggregateResult();
+        System.out.println("aggregationBuildingCountClasses ::: " + aggregationBuildingCountClasses);
+    }
+
+
+    //============================================= Operations on Employee ============================================
+
+    @PostMapping(value = "/check/transaction")
+    public void checkTransactions() throws InterruptedException {
+
+        mainServiceForTransactionExample.transactionExample();
+    }
+
+    @PostMapping(value = "/employees")
+    public ResponseEntity<Employee> addEmployee(@RequestBody Employee employee){
+        employeeRepository.save(employee);
+
+        return ResponseEntity.ok(employee);
+    }
+
+    @GetMapping(value = "/employees")
+    public ResponseEntity<List<Employee>> getEmployees(@RequestParam("age") int age, @RequestParam("department") String department){
+        List<Employee> employeesByAgeAndDepartment = employeeRepository.findEmployeesByAgeAndDepartment(age, department);
+
+        return ResponseEntity.ok(employeesByAgeAndDepartment);
+    }
+
+    @GetMapping(value = "/employees/textsearch")
+    public ResponseEntity<Void> getEmployees(){
+        myMongoTemplateRepository.textSearchOnEmployeesByMatchingTerm("Anoop");
+        myMongoTemplateRepository.textSearchOnEmployeesByMatchingAny("Anoop", "Volvo", "Engineering");
+        myMongoTemplateRepository.textSearchOnEmployeesByMatchingPhrase("Management");
+
+        return ResponseEntity.ok().build();
     }
 }
